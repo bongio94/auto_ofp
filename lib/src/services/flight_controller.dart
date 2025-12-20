@@ -22,9 +22,9 @@ class FlightController extends _$FlightController {
     // Prevent request spamming (e.g., max 1 request every 5 seconds)
     if (_lastRequestTime != null) {
       final difference = DateTime.now().difference(_lastRequestTime!);
-      if (difference.inSeconds < 5) {
+      if (difference.inSeconds < 10) {
         state = AsyncError(
-          "Please wait ${5 - difference.inSeconds}s before searching again.",
+          "Please wait ${10 - difference.inSeconds}s before searching again.",
           StackTrace.current,
         );
         return;
@@ -36,7 +36,7 @@ class FlightController extends _$FlightController {
     if (cachedEntry != null) {
       final isFresh =
           DateTime.now().difference(cachedEntry.timestamp) <
-          const Duration(minutes: 30);
+          const Duration(hours: 24);
       if (isFresh) {
         // Return cached data immediately
         state = AsyncData(cachedEntry.data);
