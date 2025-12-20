@@ -55,10 +55,13 @@ class FlightController extends _$FlightController {
       final service = FlightAwareService();
       final result = await service.getFlight(normalizedIdent);
 
-      if (result != null) {
-        // Save to cache
-        _cache[normalizedIdent] = (data: result, timestamp: DateTime.now());
+      if (result == null) {
+        throw Exception('No flight found for $normalizedIdent');
       }
+
+      // Save to cache
+      _cache[normalizedIdent] = (data: result, timestamp: DateTime.now());
+
       return result;
     });
   }
