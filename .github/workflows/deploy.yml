@@ -20,8 +20,7 @@ jobs:
       - name: Build Web
         run: |
           flutter build web --release \
-          --base-href "/auto_ofp/" \
-          --dart-define=FLIGHTAWARE_API_KEY=${{ secrets.FLIGHTAWARE_API_KEY }}
+          --base-href "/auto_ofp/"
 
       - name: Deploy to GitHub Pages
         uses: peaceiris/actions-gh-pages@v4
