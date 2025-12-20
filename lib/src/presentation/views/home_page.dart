@@ -27,7 +27,7 @@ class _FlightSearchScreenState extends ConsumerState<FlightSearchScreen> {
   void _startCooldown() {
     setState(() => _isCooldown = true);
     _cooldownTimer?.cancel();
-    _cooldownTimer = Timer(const Duration(seconds: 5), () {
+    _cooldownTimer = Timer(const Duration(seconds: 10), () {
       if (mounted) {
         setState(() => _isCooldown = false);
       }
@@ -374,8 +374,6 @@ class _FlightSearchScreenState extends ConsumerState<FlightSearchScreen> {
     final dest = data['destination'] as String? ?? '';
     final type = data['aircraft_type'] as String? ?? '';
 
-    // Split ident into airline and fltnum
-    // Heuristic: separate letters from numbers
     final airlineMatch = RegExp(r'^([A-Z]+)').firstMatch(ident.toUpperCase());
     final fltNumMatch = RegExp(r'(\d+)$').firstMatch(ident);
 
@@ -390,7 +388,6 @@ class _FlightSearchScreenState extends ConsumerState<FlightSearchScreen> {
       'orig': origin,
       'dest': dest,
       'type': type,
-      // 'date': 'today', // Optional: SimBrief defaults to today
     });
 
     if (await canLaunchUrl(uri)) {
@@ -400,5 +397,3 @@ class _FlightSearchScreenState extends ConsumerState<FlightSearchScreen> {
     }
   }
 }
-
-// FlightResultCard removed as requested
