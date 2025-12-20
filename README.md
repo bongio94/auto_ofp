@@ -1,2 +1,2 @@
 # auto_ofp
-A web too for generating a SimBrief Dispatch page from a Flight Number
+A web tool for generating a SimBrief Dispatch page from a Flight Number
