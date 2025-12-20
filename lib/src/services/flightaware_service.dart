@@ -4,17 +4,13 @@ import 'package:flutter/widgets.dart';
 import 'package:http/http.dart' as http;
 
 class FlightAwareService {
-  static const apiKey = String.fromEnvironment('FLIGHTAWARE_API_KEY');
-  static const baseUrl = 'https://aeroapi.flightaware.com/aeroapi';
 
   Future<Map<String, dynamic>?> getFlight(String ident) async {
-    final url = Uri.parse('$baseUrl/flights/$ident');
+    final workerUrl = 'https://auto-ofp-flightaware.alezak94.workers.dev/?ident=$ident';
+    final url = Uri.parse(workerUrl);
 
     try {
-      final response = await http.get(
-        url,
-        headers: {'x-apikey': apiKey, 'content-type': 'application/json'},
-      );
+      final response = await http.get(url);
 
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
@@ -30,7 +26,6 @@ class FlightAwareService {
           'origin': flight['origin']['code_icao'],
           'destination': flight['destination']['code_icao'],
           'aircraft_type': flight['aircraft_type'],
-          'route': flight['route'] ?? 'DIRECT',
           'ident': flight['ident'],
         };
       } else {
