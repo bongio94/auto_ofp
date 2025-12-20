@@ -1,0 +1,27 @@
+name: Deploy AutoOFP
+  push:
+    branches: [ main ]
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: 'stable'
+
+      - run: flutter pub get 
+
+      - name: Build Web
+        run: |
+          flutter build web --release \
+          --base-href "/auto_ofp/" \
+          --dart-define=FLIGHTAWARE_KEY=${{ secrets.FLIGHTAWARE_API_KEY }}
+
+      - name: Deploy to GitHub Pages
+        uses: peaceiris/actions-gh-pages@v4
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./build/web
