@@ -28,7 +28,10 @@ class _FlightSearchScreenState extends ConsumerState<FlightSearchScreen> {
           ),
         ),
         child: const Center(
-          child: SingleChildScrollView(
+          child: Text(
+            "We'll be back soon!",
+            style: TextStyle(color: Colors.white, fontSize: 24),
+          ) /* SingleChildScrollView(
             padding: EdgeInsets.symmetric(horizontal: 24),
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
@@ -40,7 +43,7 @@ class _FlightSearchScreenState extends ConsumerState<FlightSearchScreen> {
                 HomeFooter(),
               ],
             ),
-          ),
+          ), */,
         ),
       ),
     );
