@@ -3,6 +3,12 @@
 A modern web tool designed to streamline your flight simulation workflow. **Auto OFP** automatically fetches real-world flight data and aircraft equipment to generate a SimBrief Operational Flight Plan (OFP) in seconds.
 
 <div align="center">
+  <h3>
+    <a href="https://bongio94.github.io/auto_ofp/">👉 Try it Here 👈</a>
+  </h3>
+</div>
+
+<div align="center">
   <a href="https://buymeacoffee.com/bongio94" target="_blank">
     <img src="https://cdn.buymeacoffee.com/buttons/v2/default-yellow.png" alt="Buy Me A Coffee" style="height: 60px !important;width: 217px !important;" >
   </a>
