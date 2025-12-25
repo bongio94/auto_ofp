@@ -9,42 +9,31 @@ class HomeFooter extends StatelessWidget {
     final theme = Theme.of(context);
     return Column(
       children: [
-        Text(
-          "Powered by FlightAware & SimBrief",
-          style: theme.textTheme.labelSmall?.copyWith(
-            color: Colors.grey.shade600,
-          ),
-        ),
-        const SizedBox(height: 16),
-        TextButton.icon(
-          onPressed: () async {
-            final uri = Uri.parse("https://buymeacoffee.com/bongio94");
-            if (await canLaunchUrl(uri)) {
-              await launchUrl(uri);
-            }
-          },
-          icon: const Icon(
-            Icons.coffee_rounded,
-            size: 16,
-            color: Colors.amber,
-          ),
-          label: Text(
-            "Buy me a coffee",
-            style: theme.textTheme.labelSmall?.copyWith(
-              color: Colors.amber,
-              fontWeight: FontWeight.bold,
+        Wrap(
+          alignment: WrapAlignment.center,
+          crossAxisAlignment: WrapCrossAlignment.center,
+          children: [
+            Text(
+              "Flight data provided by ",
+              style: theme.textTheme.labelSmall?.copyWith(
+                color: Colors.grey.shade600,
+              ),
             ),
-          ),
-          style: TextButton.styleFrom(
-            padding: const EdgeInsets.symmetric(
-              horizontal: 16,
-              vertical: 8,
+            InkWell(
+              onTap: () => launchUrl(
+                Uri.parse('https://opensky-network.org'),
+                mode: LaunchMode.externalApplication,
+              ),
+              child: Text(
+                "The OpenSky Network",
+                style: theme.textTheme.labelSmall?.copyWith(
+                  color: theme.colorScheme.primary, // Or Colors.blueAccent
+                  decoration: TextDecoration.underline,
+                  decorationColor: theme.colorScheme.primary,
+                ),
+              ),
             ),
-            backgroundColor: Colors.amber.withValues(alpha: 0.1),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(20),
-            ),
-          ),
+          ],
         ),
       ],
     );
