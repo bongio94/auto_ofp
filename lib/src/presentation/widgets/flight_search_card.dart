@@ -1,8 +1,7 @@
 import 'dart:async';
-import 'package:auto_ofp/src/services/flight_controller.dart';
+import 'package:auto_ofp/src/services/flight_fetching_service.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:url_launcher/url_launcher.dart';
 
 class FlightSearchCard extends ConsumerStatefulWidget {
   const FlightSearchCard({super.key});
@@ -15,58 +14,58 @@ class _FlightSearchCardState extends ConsumerState<FlightSearchCard> {
   final _formKey = GlobalKey<FormState>();
   final TextEditingController _controller = TextEditingController();
   bool _hasLaunched = false;
-  bool _isCooldown = false;
-  Timer? _cooldownTimer;
+  bool _isLoading = false;
 
   @override
   void dispose() {
     _controller.dispose();
-    _cooldownTimer?.cancel();
     super.dispose();
   }
 
-  void _startCooldown() {
-    setState(() => _isCooldown = true);
-    _cooldownTimer?.cancel();
-    _cooldownTimer = Timer(const Duration(seconds: 10), () {
-      if (mounted) {
-        setState(() => _isCooldown = false);
-      }
-    });
+  var candidates = [];
+
+  String _getManufacturer(String type) {
+    type = type.toUpperCase();
+    if (type.startsWith('A') &&
+        type.length > 1 &&
+        RegExp(r'[0-9]').hasMatch(type[1])) {
+      return 'AIRBUS';
+    }
+    if (type.startsWith('B') &&
+        type.length > 1 &&
+        RegExp(r'[0-9]').hasMatch(type[1])) {
+      return 'BOEING';
+    }
+    if (type.startsWith('E')) return 'EMBRAER';
+    if (type.startsWith('CRJ') || type.startsWith('Q')) return 'BOMBARDIER';
+    if (type.startsWith('MD') || type.startsWith('DC')) {
+      return 'MCDONNELL DOUGLAS';
+    }
+    return 'OTHER AIRCRAFT';
   }
 
-  Future<void> _launchSimBrief(Map<String, dynamic> data) async {
-    final ident = data['ident'] as String? ?? '';
-    final origin = data['origin'] as String? ?? '';
-    final dest = data['destination'] as String? ?? '';
-    final type = data['aircraft_type'] as String? ?? '';
-
-    final airlineMatch = RegExp(r'^([A-Z]+)').firstMatch(ident.toUpperCase());
-    final fltNumMatch = RegExp(r'(\d+)$').firstMatch(ident);
-
-    final airline = airlineMatch?.group(1) ?? '';
-    final fltnum = fltNumMatch?.group(1) ?? ident;
-
-    final uri = Uri.https('www.simbrief.com', '/system/dispatch.php', {
-      'airline': airline,
-      'fltnum': fltnum,
-      'orig': origin,
-      'dest': dest,
-      'type': type,
-    });
-
-    if (await canLaunchUrl(uri)) {
-      await launchUrl(uri);
-    } else {
-      debugPrint("Could not launch $uri");
+  Map<String, List<FlightCandidate>> _groupCandidates(List<dynamic> input) {
+    final groups = <String, List<FlightCandidate>>{};
+    for (final item in input) {
+      final c = item as FlightCandidate;
+      final m = _getManufacturer(c.type);
+      groups.putIfAbsent(m, () => []).add(c);
     }
+
+    // Sort keys: Airbus/Boeing first, Others last
+    final sortedKeys = groups.keys.toList()
+      ..sort((a, b) {
+        if (a == 'OTHER AIRCRAFT') return 1;
+        if (b == 'OTHER AIRCRAFT') return -1;
+        return a.compareTo(b);
+      });
+
+    return {for (var k in sortedKeys) k: groups[k]!};
   }
 
   @override
   Widget build(BuildContext context) {
-    final flightState = ref.watch(flightControllerProvider);
     final theme = Theme.of(context);
-    final isButtonDisabled = flightState.isLoading || _isCooldown;
 
     return Container(
       constraints: const BoxConstraints(maxWidth: 400),
@@ -107,13 +106,13 @@ class _FlightSearchCardState extends ConsumerState<FlightSearchCard> {
               ),
               validator: (value) {
                 if (value == null || value.trim().isEmpty) {
-                  return 'Please enter a flight number';
+                  return 'Please paste a FlightAware link';
                 }
-                final upValue = value.trim().toUpperCase();
-                // Check format: 2-3 Letters + 1-4 Digits + Optional 1 Letter Suffix
-                // Examples: CSZ123, AAL1, BAW40
-                if (!RegExp(r'^[A-Z]{2,3}\d{1,4}[A-Z]?$').hasMatch(upValue)) {
-                  return 'Invalid format. Use Airline Code + Number (e.g. AAL123)';
+                final urlResult = FlightImporter().parseFlightAwareUrl(
+                  value.trim(),
+                );
+                if (urlResult == null) {
+                  return 'Invalid link. Must be a specific FlightAware history URL\n(e.g .../flight/AAL1/history/20251221/...)';
                 }
                 return null;
               },
@@ -123,10 +122,10 @@ class _FlightSearchCardState extends ConsumerState<FlightSearchCard> {
                 }
               },
               textAlign: TextAlign.center,
-              textCapitalization: TextCapitalization.characters,
+              // textCapitalization: TextCapitalization.none, // URL usually case sensitive but often lowercase
               decoration: InputDecoration(
-                errorMaxLines: 2,
-                hintText: "CSZ123 or AAL1",
+                errorMaxLines: 3,
+                hintText: "Paste FlightAware Link",
                 hintStyle: TextStyle(color: Colors.grey.shade600),
                 filled: true,
                 fillColor: Colors.black.withValues(alpha: 0.2),
@@ -152,7 +151,7 @@ class _FlightSearchCardState extends ConsumerState<FlightSearchCard> {
             SizedBox(
               height: 54,
               child: FilledButton(
-                onPressed: isButtonDisabled
+                onPressed: _isLoading
                     ? null
                     : () async {
                         if (!_formKey.currentState!.validate()) {
@@ -164,24 +163,35 @@ class _FlightSearchCardState extends ConsumerState<FlightSearchCard> {
                           setState(() => _hasLaunched = false);
                         }
 
-                        // Start UI cooldown immediately to prevent double-taps
-                        _startCooldown();
+                        setState(() {
+                          _isLoading = true;
+                          candidates = []; // Clear previous results
+                        });
 
-                        final controller = ref.read(
-                          flightControllerProvider.notifier,
-                        );
-                        await controller.searchFlight(
-                          _controller.text,
-                        );
+                        try {
+                          final results = await FlightImporter()
+                              .getCandidatesFromUrl(
+                                _controller.text,
+                              );
 
-                        final newState = ref.read(
-                          flightControllerProvider,
-                        );
-                        if (newState.hasValue && newState.value != null) {
-                          await _launchSimBrief(newState.value!);
+                          // Deduplicate: User only cares about distinct Aircraft Types
+                          final uniqueResults = <FlightCandidate>[];
+                          final seenTypes = <String>{};
+                          for (final candidate in results) {
+                            if (seenTypes.add(candidate.type)) {
+                              uniqueResults.add(candidate);
+                            }
+                          }
+
                           if (mounted) {
                             setState(() {
-                              _hasLaunched = true;
+                              candidates = uniqueResults;
+                            });
+                          }
+                        } finally {
+                          if (mounted) {
+                            setState(() {
+                              _isLoading = false;
                             });
                           }
                         }
@@ -195,21 +205,12 @@ class _FlightSearchCardState extends ConsumerState<FlightSearchCard> {
                     borderRadius: BorderRadius.circular(12),
                   ),
                 ),
-                child: flightState.isLoading
-                    ? const SizedBox(
-                        height: 24,
-                        width: 24,
-                        child: CircularProgressIndicator(
-                          strokeWidth: 2,
-                          color: Colors.black,
-                        ),
-                      )
-                    : Text(
-                        _isCooldown ? "PLEASE WAIT..." : "GENERATE PLAN",
+                child: _isLoading
+                    ? const _LoadingTextAnimation()
+                    : const Text(
+                        "GENERATE PLAN",
                         style: TextStyle(
-                          color: isButtonDisabled
-                              ? Colors.grey
-                              : Colors.black, // Contrast for sky blue
+                          color: Colors.black,
                           fontSize: 16,
                           fontWeight: FontWeight.bold,
                           letterSpacing: 1.0,
@@ -217,8 +218,202 @@ class _FlightSearchCardState extends ConsumerState<FlightSearchCard> {
                       ),
               ),
             ),
+
+            if (candidates.isEmpty &&
+                _isLoading == false &&
+                _controller.text.isNotEmpty)
+              Padding(
+                padding: const EdgeInsets.only(top: 16.0),
+                child: Text(
+                  "No candidates found yet...",
+                  style: TextStyle(color: Colors.white54),
+                ),
+              ),
+
+            if (candidates.isNotEmpty) ...[
+              const SizedBox(height: 24),
+              // Common Trip Details Header
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.symmetric(
+                  vertical: 16,
+                  horizontal: 20,
+                ),
+                decoration: BoxDecoration(
+                  color: Colors.black.withValues(alpha: 0.3),
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(color: Colors.white10),
+                ),
+                child: Column(
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Text(
+                          candidates.first.origin,
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 24,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 16),
+                          child: Icon(
+                            Icons.arrow_forward_rounded,
+                            color: theme.colorScheme.primary,
+                            size: 20,
+                          ),
+                        ),
+                        Text(
+                          candidates.first.destination,
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 24,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      "CALLSIGN: ${candidates.first.callsign}",
+                      style: const TextStyle(
+                        color: Colors.white54,
+                        fontSize: 12,
+                        letterSpacing: 2.0,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+
+              const SizedBox(height: 24),
+
+              const SizedBox(height: 12),
+
+              for (final group in _groupCandidates(candidates).entries) ...[
+                Padding(
+                  padding: const EdgeInsets.only(top: 12, bottom: 8),
+                  child: Text(
+                    group.key,
+                    style: const TextStyle(
+                      color: Colors.grey,
+                      fontSize: 12,
+                      fontWeight: FontWeight.bold,
+                      letterSpacing: 1.2,
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                ),
+                Wrap(
+                  spacing: 12,
+                  runSpacing: 12,
+                  alignment: WrapAlignment.start,
+                  children: group.value.map<Widget>((c) {
+                    return Material(
+                      color: Colors.transparent,
+                      child: InkWell(
+                        onTap: () => FlightImporter().launchSimBrief(c),
+                        borderRadius: BorderRadius.circular(16),
+                        child: Container(
+                          width: 100, // Fixed width for uniformity
+                          padding: const EdgeInsets.symmetric(
+                            vertical: 16,
+                          ),
+                          decoration: BoxDecoration(
+                            color: theme.colorScheme.primary.withValues(
+                              alpha: 0.1,
+                            ),
+                            borderRadius: BorderRadius.circular(16),
+                            border: Border.all(
+                              color: theme.colorScheme.primary.withValues(
+                                alpha: 0.3,
+                              ),
+                              width: 1.5,
+                            ),
+                            boxShadow: [
+                              BoxShadow(
+                                color: theme.colorScheme.primary.withValues(
+                                  alpha: 0.1,
+                                ),
+                                blurRadius: 10,
+                                offset: const Offset(0, 4),
+                              ),
+                            ],
+                          ),
+                          child: Column(
+                            children: [
+                              const Icon(
+                                Icons.flight,
+                                color: Colors.white,
+                                size: 24,
+                              ),
+                              const SizedBox(height: 8),
+                              Text(
+                                c.type,
+                                style: const TextStyle(
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 18,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    );
+                  }).toList(),
+                ),
+                const SizedBox(height: 8),
+              ],
+
+              const SizedBox(height: 24),
+              Center(
+                child: OutlinedButton.icon(
+                  onPressed: () {
+                    final base = candidates.first;
+                    final manual = FlightCandidate(
+                      icao24: '',
+                      callsign: base.callsign,
+                      airlineCode: base.airlineCode,
+                      flightNumber: base.flightNumber,
+                      type: '', // Empty type to let user choose
+                      origin: base.origin,
+                      destination: base.destination,
+                      date: base.date,
+                      atcCallsign: base.atcCallsign,
+                    );
+                    FlightImporter().launchSimBrief(manual);
+                  },
+                  style: OutlinedButton.styleFrom(
+                    side: BorderSide(
+                      color: Colors.white.withValues(alpha: 0.3),
+                    ),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 24,
+                      vertical: 16,
+                    ),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                  icon: const Icon(Icons.edit_note, color: Colors.white70),
+                  label: const Text(
+                    "I'LL CHOOSE AIRCRAFT MANUALLY",
+                    style: TextStyle(
+                      color: Colors.white70,
+                      fontWeight: FontWeight.bold,
+                      letterSpacing: 1.0,
+                    ),
+                  ),
+                ),
+              ),
+            ],
+
             // State Feedback Area
-            AnimatedSize(
+            /*             AnimatedSize(
               duration: const Duration(milliseconds: 300),
               child: flightState.when(
                 data: (data) => data != null
@@ -310,8 +505,83 @@ class _FlightSearchCardState extends ConsumerState<FlightSearchCard> {
                   ),
                 ),
               ),
-            ),
+            ), */
           ],
+        ),
+      ),
+    );
+  }
+}
+
+class _LoadingTextAnimation extends StatefulWidget {
+  const _LoadingTextAnimation();
+
+  @override
+  State<_LoadingTextAnimation> createState() => _LoadingTextAnimationState();
+}
+
+class _LoadingTextAnimationState extends State<_LoadingTextAnimation> {
+  int _index = 0;
+  Timer? _timer;
+
+  final List<String> _phrases = [
+    "CONTACTING ATC...",
+    "ALIGNING IRS...",
+    "CHECKING OFP...",
+    "LOADING CARGO...",
+    "SPOOLING ENGINES...",
+    "REQUESTING CLEARANCE...",
+    "CHECKING WEATHER...",
+  ];
+
+  @override
+  void initState() {
+    super.initState();
+    _timer = Timer.periodic(const Duration(milliseconds: 1000), (timer) {
+      if (mounted) {
+        setState(() {
+          _index = (_index + 1) % _phrases.length;
+        });
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _timer?.cancel();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedSwitcher(
+      duration: const Duration(milliseconds: 300),
+      transitionBuilder: (child, animation) {
+        final offset =
+            Tween<Offset>(
+              begin: const Offset(0.0, 0.5),
+              end: Offset.zero,
+            ).animate(
+              CurvedAnimation(
+                parent: animation,
+                curve: Curves.easeOutBack,
+              ),
+            );
+        return FadeTransition(
+          opacity: animation,
+          child: SlideTransition(
+            position: offset,
+            child: child,
+          ),
+        );
+      },
+      child: Text(
+        _phrases[_index],
+        key: ValueKey<String>(_phrases[_index]),
+        style: const TextStyle(
+          fontSize: 14,
+          fontWeight: FontWeight.bold,
+          letterSpacing: 1.0,
         ),
       ),
     );
