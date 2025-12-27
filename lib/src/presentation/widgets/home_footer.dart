@@ -35,6 +35,21 @@ class HomeFooter extends StatelessWidget {
             ),
           ],
         ),
+        const SizedBox(height: 8),
+        InkWell(
+          onTap: () => launchUrl(
+            Uri.parse('https://github.com/bongio94/auto_ofp'),
+            mode: LaunchMode.externalApplication,
+          ),
+          child: Text(
+            "View on GitHub",
+            style: theme.textTheme.labelSmall?.copyWith(
+              color: theme.colorScheme.primary,
+              decoration: TextDecoration.underline,
+              decorationColor: theme.colorScheme.primary,
+            ),
+          ),
+        ),
       ],
     );
   }
