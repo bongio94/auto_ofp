@@ -174,6 +174,12 @@ class _FlightSearchCardState extends ConsumerState<FlightSearchCard> {
                                 _controller.text,
                               );
 
+                          // Update Global Stats
+                          if (mounted) {
+                            ref.read(flightPlanCountProvider.notifier).state =
+                                FlightImporter.globalGeneratedCount;
+                          }
+
                           // Deduplicate: User only cares about distinct Aircraft Types
                           final uniqueResults = <FlightCandidate>[];
                           final seenTypes = <String>{};

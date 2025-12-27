@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:flutter/services.dart' show rootBundle;
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 class FlightCandidate {
@@ -28,9 +29,15 @@ class FlightCandidate {
   });
 }
 
+final flightPlanCountProvider = StateProvider<int>((ref) => 0);
+
 class FlightImporter {
   final String workerUrl = "https://opensky-authenticator.alezak94.workers.dev";
   Map<String, dynamic>? _aircraftDb;
+
+  // --- NEW: Global Counter Variable ---
+  static int globalGeneratedCount = 0;
+  // ------------------------------------
 
   Future<void> loadLocalDatabase() async {
     if (_aircraftDb != null) return;
@@ -107,6 +114,14 @@ class FlightImporter {
 
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
+
+        // --- NEW: Update Global Counter ---
+        if (data['stats'] != null) {
+          globalGeneratedCount = data['stats']['total_generated'] ?? 0;
+          debugPrint("🌍 Global Plans Generated: $globalGeneratedCount");
+        }
+        // ----------------------------------
+
         final List rawCandidates = data['candidates'] ?? [];
 
         for (var c in rawCandidates) {
@@ -160,6 +175,34 @@ class FlightImporter {
       debugPrint("❌ Network Error: $e");
       return [];
     }
+  }
+
+  Future<int?> fetchGlobalStats() async {
+    // Call the /stats endpoint to get count without incrementing
+    final uri = Uri.parse("$workerUrl/stats");
+
+    try {
+      final response = await http.get(uri);
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+
+        int? count;
+        if (data['total_generated'] != null) {
+          count = data['total_generated'];
+        } else if (data['stats'] != null) {
+          count = data['stats']['total_generated'];
+        }
+
+        if (count != null) {
+          // Update static cache
+          globalGeneratedCount = count;
+          return count;
+        }
+      }
+    } catch (e) {
+      debugPrint("❌ Error fetching stats: $e");
+    }
+    return null;
   }
 
   void launchSimBrief(FlightCandidate selection) {
