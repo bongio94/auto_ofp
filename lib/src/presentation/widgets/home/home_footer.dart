@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:auto_ofp/src/services/flight_fetching_service.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -22,7 +23,7 @@ class _HomeFooterState extends ConsumerState<HomeFooter> {
 
   Future<void> _fetchStats() async {
     // Always refresh to be "live"
-    final count = await FlightImporter().fetchGlobalStats();
+    final count = await FlightImporter().fetchGlobalStats(ref);
     if (count != null && mounted) {
       ref.read(flightPlanCountProvider.notifier).state = count;
       debugPrint("UPDATED COUNT: $count");

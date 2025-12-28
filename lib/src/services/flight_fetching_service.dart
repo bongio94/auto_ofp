@@ -30,6 +30,7 @@ class FlightCandidate {
 }
 
 final flightPlanCountProvider = StateProvider<int>((ref) => 0);
+final flightSearchQueryProvider = StateProvider<String>((ref) => '');
 
 class FlightImporter {
   final String workerUrl = "https://opensky-authenticator.alezak94.workers.dev";
@@ -173,12 +174,31 @@ class FlightImporter {
     }
   }
 
-  Future<int?> fetchGlobalStats() async {
+  static DateTime? _lastFetchTime;
+  static int? _cachedCount;
+
+  Future<int?> fetchGlobalStats(
+    WidgetRef ref, {
+    bool forceRefresh = false,
+  }) async {
+    // Basic throttle/cache: Don't fetch if less than 60s passed, unless forced
+    if (!forceRefresh &&
+        _lastFetchTime != null &&
+        DateTime.now().difference(_lastFetchTime!) <
+            const Duration(seconds: 60) &&
+        _cachedCount != null) {
+      debugPrint("Using cached global stats");
+      return _cachedCount;
+    }
+
     // Call the /stats endpoint to get count without incrementing
     final uri = Uri.parse("$workerUrl/stats");
 
     try {
       final response = await http.get(uri);
+
+      _lastFetchTime = DateTime.now(); // Update timestamp on attempt
+
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
 
@@ -189,9 +209,18 @@ class FlightImporter {
           count = data['stats']['total_generated'];
         }
 
+        if (data['recent_flights'] != null) {
+          final List<dynamic> recentRaw = data['recent_flights'];
+          final recent = recentRaw
+              .map((e) => RecentFlight.fromJson(e))
+              .toList();
+          ref.read(recentFlightsProvider.notifier).state = recent;
+        }
+
         if (count != null) {
           // Update static cache
           globalGeneratedCount = count;
+          _cachedCount = count;
           return count;
         }
       }
@@ -216,3 +245,28 @@ class FlightImporter {
     launchUrl(url, mode: LaunchMode.externalApplication);
   }
 }
+
+class RecentFlight {
+  final String callsign;
+  final String origin;
+  final String destination;
+  final String airline;
+
+  RecentFlight({
+    required this.callsign,
+    required this.origin,
+    required this.destination,
+    required this.airline,
+  });
+
+  factory RecentFlight.fromJson(Map<String, dynamic> json) {
+    return RecentFlight(
+      callsign: json['callsign'] ?? 'Unknown',
+      origin: json['origin'] ?? '???',
+      destination: json['destination'] ?? '???',
+      airline: json['airline'] ?? '',
+    );
+  }
+}
+
+final recentFlightsProvider = StateProvider<List<RecentFlight>>((ref) => []);

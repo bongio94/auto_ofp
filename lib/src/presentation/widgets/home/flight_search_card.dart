@@ -49,10 +49,14 @@ class _FlightSearchCardState extends ConsumerState<FlightSearchCard> {
         _controller.text,
       );
 
-      // Update Global Stats
+      // Update Global Stats & Community Feed
       if (mounted) {
+        final count = await FlightImporter().fetchGlobalStats(
+          ref,
+          forceRefresh: true,
+        );
         ref.read(flightPlanCountProvider.notifier).state =
-            FlightImporter.globalGeneratedCount;
+            count ?? FlightImporter.globalGeneratedCount;
       }
 
       final uniqueResults = <FlightCandidate>[];
@@ -139,6 +143,13 @@ class _FlightSearchCardState extends ConsumerState<FlightSearchCard> {
 
   @override
   Widget build(BuildContext context) {
+    ref.listen(flightSearchQueryProvider, (previous, next) {
+      if (next.isNotEmpty && next != _controller.text) {
+        _controller.text = next;
+        _performSearch();
+      }
+    });
+
     final theme = Theme.of(context);
     final hasResults = candidates.isNotEmpty || suggestedCandidates.isNotEmpty;
     // Helper to get a candidate for header display

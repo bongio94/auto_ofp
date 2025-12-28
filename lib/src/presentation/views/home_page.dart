@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../widgets/home/flight_search_card.dart';
 import '../widgets/home/home_footer.dart';
 import '../widgets/home/home_header.dart';
+import '../widgets/home/community_feed.dart';
 
 class FlightSearchScreen extends ConsumerStatefulWidget {
   const FlightSearchScreen({super.key});
@@ -41,43 +42,55 @@ class _FlightSearchScreenState extends ConsumerState<FlightSearchScreen> {
                   child: Center(
                     child: Padding(
                       padding: const EdgeInsets.symmetric(vertical: 32.0),
-                      child: IntrinsicHeight(
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          crossAxisAlignment: CrossAxisAlignment.stretch,
-                          children: [
-                            SizedBox(
-                              width: 350,
-                              child: AnimatedAlign(
-                                duration: const Duration(milliseconds: 600),
-                                curve: Curves.fastOutSlowIn,
-                                alignment: _hasResults
-                                    ? Alignment.topRight
-                                    : Alignment.centerRight,
-                                child: const Column(
-                                  mainAxisSize: MainAxisSize.min,
-                                  crossAxisAlignment: CrossAxisAlignment.center,
-                                  children: [
-                                    HomeHeader(),
-                                    SizedBox(height: 16),
-                                    HomeFooter(),
-                                  ],
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.only(left: 100),
+                            width: 814,
+                            child: CommunityFeed(),
+                          ),
+                          const SizedBox(height: 24),
+                          IntrinsicHeight(
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              crossAxisAlignment: CrossAxisAlignment.stretch,
+                              children: [
+                                SizedBox(
+                                  width: 350,
+                                  child: AnimatedAlign(
+                                    duration: const Duration(milliseconds: 600),
+                                    curve: Curves.fastOutSlowIn,
+                                    alignment: _hasResults
+                                        ? Alignment.topRight
+                                        : Alignment.centerRight,
+                                    child: Column(
+                                      mainAxisSize: MainAxisSize.min,
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.center,
+                                      children: [
+                                        HomeHeader(),
+                                        SizedBox(height: 16),
+                                        HomeFooter(),
+                                      ],
+                                    ),
+                                  ),
                                 ),
-                              ),
+                                const SizedBox(width: 64),
+                                Align(
+                                  alignment: Alignment.centerLeft,
+                                  child: FlightSearchCard(
+                                    onResultsFound: (val) {
+                                      if (_hasResults != val) {
+                                        setState(() => _hasResults = val);
+                                      }
+                                    },
+                                  ),
+                                ),
+                              ],
                             ),
-                            const SizedBox(width: 64),
-                            Align(
-                              alignment: Alignment.centerLeft,
-                              child: FlightSearchCard(
-                                onResultsFound: (val) {
-                                  if (_hasResults != val) {
-                                    setState(() => _hasResults = val);
-                                  }
-                                },
-                              ),
-                            ),
-                          ],
-                        ),
+                          ),
+                        ],
                       ),
                     ),
                   ),
@@ -89,7 +102,7 @@ class _FlightSearchScreenState extends ConsumerState<FlightSearchScreen> {
               padding: const EdgeInsets.symmetric(horizontal: 24),
               child: ConstrainedBox(
                 constraints: BoxConstraints(minHeight: constraints.maxHeight),
-                child: const Center(
+                child: Center(
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
@@ -97,6 +110,8 @@ class _FlightSearchScreenState extends ConsumerState<FlightSearchScreen> {
                       SizedBox(height: 48),
                       FlightSearchCard(),
                       SizedBox(height: 32),
+                      CommunityFeed(),
+                      SizedBox(height: 16),
                       HomeFooter(),
                     ],
                   ),
