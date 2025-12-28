@@ -27,20 +27,27 @@ class _FlightSearchScreenState extends ConsumerState<FlightSearchScreen> {
             ],
           ),
         ),
-        child: const Center(
-          child: SingleChildScrollView(
-            padding: EdgeInsets.symmetric(horizontal: 24),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                HomeHeader(),
-                SizedBox(height: 48),
-                FlightSearchCard(),
-                SizedBox(height: 32),
-                HomeFooter(),
-              ],
-            ),
-          ),
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            return SingleChildScrollView(
+              padding: const EdgeInsets.symmetric(horizontal: 24),
+              child: ConstrainedBox(
+                constraints: BoxConstraints(minHeight: constraints.maxHeight),
+                child: const Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      HomeHeader(),
+                      SizedBox(height: 48),
+                      FlightSearchCard(),
+                      SizedBox(height: 32),
+                      HomeFooter(),
+                    ],
+                  ),
+                ),
+              ),
+            );
+          },
         ),
       ),
     );
