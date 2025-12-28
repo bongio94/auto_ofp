@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'package:auto_ofp/src/services/flight_fetching_service.dart';
+import 'package:auto_ofp/src/services/airline_fleet_service.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -23,6 +24,7 @@ class _FlightSearchCardState extends ConsumerState<FlightSearchCard> {
   }
 
   var candidates = [];
+  var suggestedCandidates = <FlightCandidate>[];
 
   String _getManufacturer(String type) {
     type = type.toUpperCase();
@@ -166,6 +168,7 @@ class _FlightSearchCardState extends ConsumerState<FlightSearchCard> {
                         setState(() {
                           _isLoading = true;
                           candidates = []; // Clear previous results
+                          suggestedCandidates = [];
                         });
 
                         try {
@@ -189,9 +192,38 @@ class _FlightSearchCardState extends ConsumerState<FlightSearchCard> {
                             }
                           }
 
+                          // Suggestions Logic
+                          final newSuggestions = <FlightCandidate>[];
+                          if (uniqueResults.isNotEmpty) {
+                            final base = uniqueResults.first;
+                            final suggestedTypes =
+                                AirlineFleetService.getSuggestedAircraft(
+                                  base.airlineCode,
+                                );
+
+                            for (final type in suggestedTypes) {
+                              if (!seenTypes.contains(type)) {
+                                newSuggestions.add(
+                                  FlightCandidate(
+                                    icao24: 'suggested',
+                                    callsign: base.callsign,
+                                    airlineCode: base.airlineCode,
+                                    flightNumber: base.flightNumber,
+                                    type: type,
+                                    origin: base.origin,
+                                    destination: base.destination,
+                                    date: base.date,
+                                    atcCallsign: base.atcCallsign,
+                                  ),
+                                );
+                              }
+                            }
+                          }
+
                           if (mounted) {
                             setState(() {
                               candidates = uniqueResults;
+                              suggestedCandidates = newSuggestions;
                             });
                           }
                         } finally {
@@ -337,6 +369,134 @@ class _FlightSearchCardState extends ConsumerState<FlightSearchCard> {
 
               const SizedBox(height: 24),
 
+              if (suggestedCandidates.isNotEmpty) ...[
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 4.0),
+                  child: Row(
+                    children: [
+                      const Expanded(child: Divider(color: Colors.white24)),
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 16),
+                        child: Text(
+                          "SUGGESTED FLEET",
+                          style: theme.textTheme.labelSmall?.copyWith(
+                            color: Colors.white70,
+                            letterSpacing: 2.0,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                      const Expanded(child: Divider(color: Colors.white24)),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 16),
+                for (final group in _groupCandidates(
+                  suggestedCandidates,
+                ).entries) ...[
+                  Padding(
+                    padding: const EdgeInsets.only(top: 12, bottom: 8),
+                    child: Text(
+                      group.key,
+                      style: const TextStyle(
+                        color: Colors.grey,
+                        fontSize: 12,
+                        fontWeight: FontWeight.bold,
+                        letterSpacing: 1.2,
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                  ),
+                  Wrap(
+                    spacing: 12,
+                    runSpacing: 12,
+                    alignment: WrapAlignment.start,
+                    children: group.value.map<Widget>((c) {
+                      return Material(
+                        color: Colors.transparent,
+                        child: InkWell(
+                          onTap: () => FlightImporter().launchSimBrief(c),
+                          borderRadius: BorderRadius.circular(16),
+                          child: Container(
+                            width: 100,
+                            padding: const EdgeInsets.symmetric(
+                              vertical: 16,
+                            ),
+                            decoration: BoxDecoration(
+                              color: theme.colorScheme.secondary.withValues(
+                                alpha: 0.1,
+                              ),
+                              borderRadius: BorderRadius.circular(16),
+                              border: Border.all(
+                                color: theme.colorScheme.secondary.withValues(
+                                  alpha: 0.3,
+                                ),
+                                width: 1.5,
+                              ),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: theme.colorScheme.secondary.withValues(
+                                    alpha: 0.1,
+                                  ),
+                                  blurRadius: 10,
+                                  offset: const Offset(0, 4),
+                                ),
+                              ],
+                            ),
+                            child: Column(
+                              children: [
+                                const Icon(
+                                  Icons.flight,
+                                  color: Colors.white70,
+                                  size: 24,
+                                ),
+                                const SizedBox(height: 8),
+                                Text(
+                                  c.type,
+                                  style: const TextStyle(
+                                    color: Colors.white70,
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 18,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      );
+                    }).toList(),
+                  ),
+                  const SizedBox(height: 8),
+                ],
+                const SizedBox(height: 24),
+              ],
+
+              if (suggestedCandidates.isNotEmpty) ...[
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 4.0),
+                  child: Row(
+                    children: [
+                      const Expanded(child: Divider(color: Colors.white24)),
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 16),
+                        child: Text(
+                          "DETECTED AIRCRAFT",
+                          style: theme.textTheme.labelSmall?.copyWith(
+                            color: theme.colorScheme.primary.withValues(
+                              alpha: 0.8,
+                            ),
+                            letterSpacing: 2.0,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                      const Expanded(child: Divider(color: Colors.white24)),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 16),
+              ],
+
               for (final group in _groupCandidates(candidates).entries) ...[
                 Padding(
                   padding: const EdgeInsets.only(top: 12, bottom: 8),
@@ -363,9 +523,7 @@ class _FlightSearchCardState extends ConsumerState<FlightSearchCard> {
                         borderRadius: BorderRadius.circular(16),
                         child: Container(
                           width: 100, // Fixed width for uniformity
-                          padding: const EdgeInsets.symmetric(
-                            vertical: 16,
-                          ),
+                          padding: const EdgeInsets.symmetric(vertical: 16),
                           decoration: BoxDecoration(
                             color: theme.colorScheme.primary.withValues(
                               alpha: 0.1,
