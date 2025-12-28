@@ -55,38 +55,41 @@ class _FlightSearchCardState extends ConsumerState<FlightSearchCard> {
             FlightImporter.globalGeneratedCount;
       }
 
-      // Deduplicate: User only cares about distinct Aircraft Types
       final uniqueResults = <FlightCandidate>[];
-      final seenTypes = <String>{};
-      for (final candidate in results) {
-        if (seenTypes.add(candidate.type)) {
-          uniqueResults.add(candidate);
-        }
-      }
-
-      // Suggestions Logic
       final newSuggestions = <FlightCandidate>[];
-      if (uniqueResults.isNotEmpty) {
-        final base = uniqueResults.first;
+      final seenTypes = <String>{};
+
+      if (results.isNotEmpty) {
+        final base = results.first;
+
+        // 1. Suggestions Logic (Priority: Matches user request to favor suggestions)
         final suggestedTypes = AirlineFleetService.getSuggestedAircraft(
           base.airlineCode,
         );
 
         for (final type in suggestedTypes) {
-          if (!seenTypes.contains(type)) {
+          if (seenTypes.add(type)) {
+            // Add returns true if type was not in set
             newSuggestions.add(
               FlightCandidate(
                 icao24: 'suggested',
                 callsign: base.callsign,
                 airlineCode: base.airlineCode,
                 flightNumber: base.flightNumber,
-                type: type, // Suggested Type
+                type: type,
                 origin: base.origin,
                 destination: base.destination,
                 date: base.date,
                 atcCallsign: base.atcCallsign,
               ),
             );
+          }
+        }
+
+        // 2. Detected Logic (Deduplicate & Remove if already in Suggestions)
+        for (final candidate in results) {
+          if (seenTypes.add(candidate.type)) {
+            uniqueResults.add(candidate);
           }
         }
       }
@@ -97,7 +100,7 @@ class _FlightSearchCardState extends ConsumerState<FlightSearchCard> {
           suggestedCandidates = newSuggestions;
         });
         widget.onResultsFound?.call(
-          uniqueResults.isNotEmpty,
+          uniqueResults.isNotEmpty || newSuggestions.isNotEmpty,
         );
       }
     } catch (e) {
@@ -113,8 +116,13 @@ class _FlightSearchCardState extends ConsumerState<FlightSearchCard> {
   }
 
   void _onManualSelection() {
-    if (candidates.isEmpty) return;
-    final base = candidates.first;
+    if (candidates.isEmpty && suggestedCandidates.isEmpty) return;
+
+    // Use whatever data we have to pre-fill the manual form (SimBrief launcher)
+    final base = candidates.isNotEmpty
+        ? candidates.first
+        : suggestedCandidates.first;
+
     final manual = FlightCandidate(
       icao24: '',
       callsign: base.callsign,
@@ -132,6 +140,11 @@ class _FlightSearchCardState extends ConsumerState<FlightSearchCard> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final hasResults = candidates.isNotEmpty || suggestedCandidates.isNotEmpty;
+    // Helper to get a candidate for header display
+    final displayCandidate = candidates.isNotEmpty
+        ? candidates.first
+        : (suggestedCandidates.isNotEmpty ? suggestedCandidates.first : null);
 
     return Container(
       constraints: const BoxConstraints(maxWidth: 400),
@@ -167,7 +180,7 @@ class _FlightSearchCardState extends ConsumerState<FlightSearchCard> {
               },
             ),
 
-            if (candidates.isEmpty &&
+            if (!hasResults &&
                 _isLoading == false &&
                 _controller.text.isNotEmpty)
               const Padding(
@@ -178,11 +191,11 @@ class _FlightSearchCardState extends ConsumerState<FlightSearchCard> {
                 ),
               ),
 
-            if (candidates.isNotEmpty) ...[
+            if (hasResults && displayCandidate != null) ...[
               const SizedBox(height: 24),
 
               // Common Trip Details Header
-              TripSummaryHeader(candidate: candidates.first),
+              TripSummaryHeader(candidate: displayCandidate),
 
               const SizedBox(height: 24),
 
@@ -220,100 +233,103 @@ class _FlightSearchCardState extends ConsumerState<FlightSearchCard> {
               ],
 
               // Detected Aircraft Section (Accordion)
-              InkWell(
-                onTap: () {
-                  setState(() {
-                    _showDetectedAircraft = !_showDetectedAircraft;
-                  });
-                },
-                splashColor: theme.colorScheme.primary.withValues(alpha: 0.1),
-                highlightColor: theme.colorScheme.primary.withValues(
-                  alpha: 0.05,
-                ),
-                borderRadius: BorderRadius.circular(8),
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 8.0),
-                  child: Row(
-                    children: [
-                      Expanded(
-                        child: AnimatedContainer(
-                          duration: const Duration(milliseconds: 300),
-                          child: Divider(
-                            color: _showDetectedAircraft
-                                ? theme.colorScheme.primary.withValues(
-                                    alpha: 0.5,
-                                  )
-                                : Colors.white24,
+              if (candidates.isNotEmpty) ...[
+                InkWell(
+                  onTap: () {
+                    setState(() {
+                      _showDetectedAircraft = !_showDetectedAircraft;
+                    });
+                  },
+                  splashColor: theme.colorScheme.primary.withValues(alpha: 0.1),
+                  highlightColor: theme.colorScheme.primary.withValues(
+                    alpha: 0.05,
+                  ),
+                  borderRadius: BorderRadius.circular(8),
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 8.0),
+                    child: Row(
+                      children: [
+                        Expanded(
+                          child: AnimatedContainer(
+                            duration: const Duration(milliseconds: 300),
+                            child: Divider(
+                              color: _showDetectedAircraft
+                                  ? theme.colorScheme.primary.withValues(
+                                      alpha: 0.5,
+                                    )
+                                  : Colors.white24,
+                            ),
                           ),
                         ),
-                      ),
-                      Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 16),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            AnimatedDefaultTextStyle(
-                              duration: const Duration(milliseconds: 300),
-                              style: theme.textTheme.labelSmall!.copyWith(
-                                color: _showDetectedAircraft
-                                    ? theme.colorScheme.primary
-                                    : Colors.white60,
-                                letterSpacing: 2.0,
-                                fontWeight: FontWeight.bold,
+                        Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 16),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              AnimatedDefaultTextStyle(
+                                duration: const Duration(milliseconds: 300),
+                                style: theme.textTheme.labelSmall!.copyWith(
+                                  color: _showDetectedAircraft
+                                      ? theme.colorScheme.primary
+                                      : Colors.white60,
+                                  letterSpacing: 2.0,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                                child: const Text("DETECTED AIRCRAFT"),
                               ),
-                              child: const Text("DETECTED AIRCRAFT"),
-                            ),
-                            const SizedBox(width: 8),
-                            AnimatedRotation(
-                              turns: _showDetectedAircraft ? 0.5 : 0.0,
-                              duration: const Duration(milliseconds: 300),
-                              curve: Curves.easeOutBack,
-                              child: Icon(
-                                Icons.keyboard_arrow_down_rounded,
-                                color: _showDetectedAircraft
-                                    ? theme.colorScheme.primary
-                                    : Colors.white60,
-                                size: 18,
+                              const SizedBox(width: 8),
+                              AnimatedRotation(
+                                turns: _showDetectedAircraft ? 0.5 : 0.0,
+                                duration: const Duration(milliseconds: 300),
+                                curve: Curves.easeOutBack,
+                                child: Icon(
+                                  Icons.keyboard_arrow_down_rounded,
+                                  color: _showDetectedAircraft
+                                      ? theme.colorScheme.primary
+                                      : Colors.white60,
+                                  size: 18,
+                                ),
                               ),
-                            ),
-                          ],
-                        ),
-                      ),
-                      Expanded(
-                        child: AnimatedContainer(
-                          duration: const Duration(milliseconds: 300),
-                          child: Divider(
-                            color: _showDetectedAircraft
-                                ? theme.colorScheme.primary.withValues(
-                                    alpha: 0.5,
-                                  )
-                                : Colors.white24,
+                            ],
                           ),
                         ),
-                      ),
-                    ],
+                        Expanded(
+                          child: AnimatedContainer(
+                            duration: const Duration(milliseconds: 300),
+                            child: Divider(
+                              color: _showDetectedAircraft
+                                  ? theme.colorScheme.primary.withValues(
+                                      alpha: 0.5,
+                                    )
+                                  : Colors.white24,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
                 ),
-              ),
 
-              AnimatedSize(
-                duration: const Duration(milliseconds: 400),
-                alignment: Alignment.topCenter,
-                curve: Curves.fastOutSlowIn,
-                child: _showDetectedAircraft
-                    ? Padding(
-                        padding: const EdgeInsets.symmetric(vertical: 16.0),
-                        child: AircraftSelectionGrid(
-                          candidates: candidates,
-                          accentColor: theme.colorScheme.primary,
-                          textColor: Colors.white,
-                          onSelected: (c) => FlightImporter().launchSimBrief(c),
-                        ),
-                      )
-                    : const SizedBox.shrink(),
-              ),
+                AnimatedSize(
+                  duration: const Duration(milliseconds: 400),
+                  alignment: Alignment.topCenter,
+                  curve: Curves.fastOutSlowIn,
+                  child: _showDetectedAircraft
+                      ? Padding(
+                          padding: const EdgeInsets.symmetric(vertical: 16.0),
+                          child: AircraftSelectionGrid(
+                            candidates: candidates,
+                            accentColor: theme.colorScheme.primary,
+                            textColor: Colors.white,
+                            onSelected: (c) =>
+                                FlightImporter().launchSimBrief(c),
+                          ),
+                        )
+                      : const SizedBox.shrink(),
+                ),
+                const SizedBox(height: 24),
+              ],
 
-              const SizedBox(height: 24),
               ManualSelectionButton(onPressed: _onManualSelection),
             ],
           ],
