@@ -19,7 +19,6 @@ class _HomeFooterState extends ConsumerState<HomeFooter> {
   }
 
   Future<void> _fetchStats() async {
-    // Only fetch if we don't have a count yes (or maybe always to refresh?)
     // Always refresh to be "live"
     final count = await FlightImporter().fetchGlobalStats();
     if (count != null && mounted) {
@@ -74,16 +73,9 @@ class _HomeFooterState extends ConsumerState<HomeFooter> {
                 )
               : const SizedBox(
                   height: 48,
-                ), // Placeholder height to avoid jump? No, opacity 0 handles visual hidding but takes space?
-          // Actually, AnimatedOpacity keeps space.
-          // If count is 0, we might want it NOT to take space initially if we don't want a gap.
-          // But user said "always visible".
-          // If it loads 0 initially, and then updates, using AnimatedOpacity is nice.
-          // Let's us SizedBox if 0, but wrap in AnimatedSize?
+                ),
         ),
 
-        // Let's stick to the previous conditional rendering but maybe with a small animation if it pops in.
-        // But since we fetch on init, it should pop in quickly.
         Wrap(
           alignment: WrapAlignment.center,
           crossAxisAlignment: WrapCrossAlignment.center,

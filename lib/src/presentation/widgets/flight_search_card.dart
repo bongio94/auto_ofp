@@ -122,7 +122,7 @@ class _FlightSearchCardState extends ConsumerState<FlightSearchCard> {
                 }
               },
               textAlign: TextAlign.center,
-              // textCapitalization: TextCapitalization.none, // URL usually case sensitive but often lowercase
+
               decoration: InputDecoration(
                 errorMaxLines: 3,
                 hintText: "Paste FlightAware Link",

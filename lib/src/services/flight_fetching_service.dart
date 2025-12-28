@@ -35,9 +35,7 @@ class FlightImporter {
   final String workerUrl = "https://opensky-authenticator.alezak94.workers.dev";
   Map<String, dynamic>? _aircraftDb;
 
-  // --- NEW: Global Counter Variable ---
   static int globalGeneratedCount = 0;
-  // ------------------------------------
 
   Future<void> loadLocalDatabase() async {
     if (_aircraftDb != null) return;
@@ -115,12 +113,10 @@ class FlightImporter {
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
 
-        // --- NEW: Update Global Counter ---
         if (data['stats'] != null) {
           globalGeneratedCount = data['stats']['total_generated'] ?? 0;
           debugPrint("🌍 Global Plans Generated: $globalGeneratedCount");
         }
-        // ----------------------------------
 
         final List rawCandidates = data['candidates'] ?? [];
 
