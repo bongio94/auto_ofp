@@ -238,6 +238,7 @@ class _FlightSearchCardState extends ConsumerState<FlightSearchCard> {
 
             if (candidates.isNotEmpty) ...[
               const SizedBox(height: 24),
+
               // Common Trip Details Header
               Container(
                 width: double.infinity,
@@ -252,6 +253,45 @@ class _FlightSearchCardState extends ConsumerState<FlightSearchCard> {
                 ),
                 child: Column(
                   children: [
+                    Container(
+                      margin: const EdgeInsets.only(bottom: 16),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        shape: BoxShape.circle,
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withValues(alpha: 0.2),
+                            blurRadius: 10,
+                            offset: const Offset(0, 4),
+                          ),
+                        ],
+                      ),
+                      padding: const EdgeInsets.all(2), // White border effect
+                      child: ClipOval(
+                        child: Image.network(
+                          "https://media.githubusercontent.com/media/airframesio/airline-images/main/fr24_logos/${candidates.first.airlineCode.toUpperCase()}.png",
+                          width: 60,
+                          height: 60,
+                          fit: BoxFit.contain,
+                          errorBuilder: (context, error, stackTrace) {
+                            return Container(
+                              width: 60,
+                              height: 60,
+                              color: Colors.white12,
+                              alignment: Alignment.center,
+                              child: Text(
+                                candidates.first.airlineCode.substring(0, 1),
+                                style: TextStyle(
+                                  color: theme.colorScheme.primary,
+                                  fontSize: 24,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            );
+                          },
+                        ),
+                      ),
+                    ),
                     Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
@@ -296,8 +336,6 @@ class _FlightSearchCardState extends ConsumerState<FlightSearchCard> {
               ),
 
               const SizedBox(height: 24),
-
-              const SizedBox(height: 12),
 
               for (final group in _groupCandidates(candidates).entries) ...[
                 Padding(
