@@ -1,3 +1,5 @@
+import 'package:auto_ofp/src/services/flight_fetching_service.dart';
+
 class AirlineFleetService {
   /// Returns a list of aircraft types (ICAO codes) common for the given airline.
   static List<String> getSuggestedAircraft(String airlineCode) {
@@ -14,6 +16,46 @@ class AirlineFleetService {
     // User asked for "Increase precision", so random guessing isn't good.
     // We return empty if we don't know the airline, letting other fallbacks handle it.
     return [];
+  }
+
+  static String getManufacturer(String type) {
+    type = type.toUpperCase();
+    if (type.startsWith('A') &&
+        type.length > 1 &&
+        RegExp(r'[0-9]').hasMatch(type[1])) {
+      return 'AIRBUS';
+    }
+    if (type.startsWith('B') &&
+        type.length > 1 &&
+        RegExp(r'[0-9]').hasMatch(type[1])) {
+      return 'BOEING';
+    }
+    if (type.startsWith('E')) return 'EMBRAER';
+    if (type.startsWith('CRJ') || type.startsWith('Q')) return 'BOMBARDIER';
+    if (type.startsWith('MD') || type.startsWith('DC')) {
+      return 'MCDONNELL DOUGLAS';
+    }
+    return 'OTHER AIRCRAFT';
+  }
+
+  static Map<String, List<FlightCandidate>> groupCandidates(
+    List<FlightCandidate> input,
+  ) {
+    final groups = <String, List<FlightCandidate>>{};
+    for (final c in input) {
+      final m = getManufacturer(c.type);
+      groups.putIfAbsent(m, () => []).add(c);
+    }
+
+    // Sort keys: Airbus/Boeing first, Others last
+    final sortedKeys = groups.keys.toList()
+      ..sort((a, b) {
+        if (a == 'OTHER AIRCRAFT') return 1;
+        if (b == 'OTHER AIRCRAFT') return -1;
+        return a.compareTo(b);
+      });
+
+    return {for (var k in sortedKeys) k: groups[k]!};
   }
 
   static final Map<String, List<String>> _fleets = {
