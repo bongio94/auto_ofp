@@ -28,10 +28,7 @@ class _FlightSearchScreenState extends ConsumerState<FlightSearchScreen> {
           ),
         ),
         child: const Center(
-          child: /* Text(
-            "We'll be back soon!",
-            style: TextStyle(color: Colors.white, fontSize: 24),
-          ) */ SingleChildScrollView(
+          child: SingleChildScrollView(
             padding: EdgeInsets.symmetric(horizontal: 24),
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,

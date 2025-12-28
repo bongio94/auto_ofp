@@ -122,7 +122,7 @@ class _FlightSearchCardState extends ConsumerState<FlightSearchCard> {
                 }
               },
               textAlign: TextAlign.center,
-              // textCapitalization: TextCapitalization.none, // URL usually case sensitive but often lowercase
+
               decoration: InputDecoration(
                 errorMaxLines: 3,
                 hintText: "Paste FlightAware Link",
@@ -417,101 +417,6 @@ class _FlightSearchCardState extends ConsumerState<FlightSearchCard> {
                 ),
               ),
             ],
-
-            // State Feedback Area
-            /*             AnimatedSize(
-              duration: const Duration(milliseconds: 300),
-              child: flightState.when(
-                data: (data) => data != null
-                    ? Padding(
-                        padding: const EdgeInsets.only(top: 24.0),
-                        child: Column(
-                          children: [
-                            Container(
-                              padding: const EdgeInsets.all(12),
-                              decoration: BoxDecoration(
-                                color: _hasLaunched
-                                    ? theme.colorScheme.primary.withValues(
-                                        alpha: 0.1,
-                                      )
-                                    : Colors.green.withValues(alpha: 0.1),
-                                borderRadius: BorderRadius.circular(12),
-                                border: Border.all(
-                                  color: _hasLaunched
-                                      ? theme.colorScheme.primary.withValues(
-                                          alpha: 0.3,
-                                        )
-                                      : Colors.green.withValues(alpha: 0.3),
-                                ),
-                              ),
-                              child: Row(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  Icon(
-                                    _hasLaunched
-                                        ? Icons.open_in_new
-                                        : Icons.check_circle_outline,
-                                    color: _hasLaunched
-                                        ? theme.colorScheme.primary
-                                        : Colors.green,
-                                    size: 20,
-                                  ),
-                                  const SizedBox(width: 8),
-                                  Text(
-                                    _hasLaunched
-                                        ? "Plan Opened in SimBrief"
-                                        : "Redirecting...",
-                                    style: TextStyle(
-                                      color: _hasLaunched
-                                          ? theme.colorScheme.primary
-                                          : Colors.green,
-                                      fontWeight: FontWeight.bold,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                            if (_hasLaunched) ...[
-                              const SizedBox(height: 8),
-                              TextButton(
-                                onPressed: () => _launchSimBrief(data),
-                                child: Text(
-                                  "Open again",
-                                  style: TextStyle(
-                                    color: Colors.grey.shade400,
-                                    fontSize: 12,
-                                  ),
-                                ),
-                              ),
-                            ] else
-                              TextButton(
-                                onPressed: () => _launchSimBrief(data),
-                                child: Text(
-                                  "Click if not redirected",
-                                  style: TextStyle(
-                                    color: Colors.grey.shade400,
-                                    fontSize: 12,
-                                  ),
-                                ),
-                              ),
-                          ],
-                        ),
-                      )
-                    : const SizedBox.shrink(),
-                loading: () => const SizedBox.shrink(), // Handled in button
-                error: (err, _) => Padding(
-                  padding: const EdgeInsets.only(top: 16),
-                  child: Text(
-                    "Error: $err",
-                    style: const TextStyle(
-                      color: Colors.redAccent,
-                      fontSize: 12,
-                    ),
-                    textAlign: TextAlign.center,
-                  ),
-                ),
-              ),
-            ), */
           ],
         ),
       ),
