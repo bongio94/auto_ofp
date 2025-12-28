@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../widgets/flight_search_card.dart';
-import '../widgets/home_footer.dart';
-import '../widgets/home_header.dart';
+import '../widgets/home/flight_search_card.dart';
+import '../widgets/home/home_footer.dart';
+import '../widgets/home/home_header.dart';
 
 class FlightSearchScreen extends ConsumerStatefulWidget {
   const FlightSearchScreen({super.key});

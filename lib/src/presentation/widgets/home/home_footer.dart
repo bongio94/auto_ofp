@@ -3,6 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:url_launcher/url_launcher.dart';
 
+import 'live_stats_badge.dart';
+
 class HomeFooter extends ConsumerStatefulWidget {
   const HomeFooter({super.key});
 
@@ -23,6 +25,7 @@ class _HomeFooterState extends ConsumerState<HomeFooter> {
     final count = await FlightImporter().fetchGlobalStats();
     if (count != null && mounted) {
       ref.read(flightPlanCountProvider.notifier).state = count;
+      debugPrint("UPDATED COUNT: $count");
     }
   }
 
@@ -37,40 +40,7 @@ class _HomeFooterState extends ConsumerState<HomeFooter> {
           opacity: count > 0 ? 1.0 : 0.0,
           duration: const Duration(milliseconds: 500),
           child: count > 0
-              ? Container(
-                  margin: const EdgeInsets.only(bottom: 24),
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 16,
-                    vertical: 8,
-                  ),
-                  decoration: BoxDecoration(
-                    color: theme.colorScheme.primary.withValues(alpha: 0.1),
-                    borderRadius: BorderRadius.circular(20),
-                    border: Border.all(
-                      color: theme.colorScheme.primary.withValues(alpha: 0.3),
-                    ),
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Icon(
-                        Icons.bar_chart_rounded,
-                        size: 16,
-                        color: theme.colorScheme.primary,
-                      ),
-                      const SizedBox(width: 8),
-                      Text(
-                        // Simple formatter for comma separation
-                        "${count.toString().replaceAllMapped(RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (Match m) => '${m[1]},')} PLANS GENERATED",
-                        style: theme.textTheme.labelSmall?.copyWith(
-                          color: theme.colorScheme.primary,
-                          fontWeight: FontWeight.bold,
-                          letterSpacing: 1.0,
-                        ),
-                      ),
-                    ],
-                  ),
-                )
+              ? LiveStatsBadge(count: count)
               : const SizedBox(
                   height: 48,
                 ),

@@ -3,10 +3,10 @@ import 'package:auto_ofp/src/services/airline_fleet_service.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import 'flight_search/aircraft_selection_grid.dart';
-import 'flight_search/manual_selection_button.dart';
-import 'flight_search/search_input_section.dart';
-import 'flight_search/trip_summary_header.dart';
+import '../flight_search/aircraft_selection_grid.dart';
+import '../flight_search/manual_selection_button.dart';
+import '../flight_search/search_input_section.dart';
+import '../flight_search/trip_summary_header.dart';
 
 class FlightSearchCard extends ConsumerStatefulWidget {
   final ValueChanged<bool>? onResultsFound;
