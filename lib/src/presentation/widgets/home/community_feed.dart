@@ -79,6 +79,15 @@ class _CommunityFeedState extends ConsumerState<CommunityFeed>
                 preferBelow: false,
                 message:
                     "We do not collect any personal data, only origin, destination and flight number",
+                decoration: BoxDecoration(
+                  color: Colors.black.withValues(alpha: 0.9),
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(color: Colors.white24),
+                ),
+                textStyle: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 12,
+                ),
                 child: Icon(
                   Icons.info_outline_rounded,
                   size: 16,
