@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:auto_ofp/src/presentation/widgets/flight_search/metar_badge.dart';
 import 'package:auto_ofp/src/services/flight_fetching_service.dart';
 
 class TripSummaryHeader extends StatelessWidget {
@@ -64,13 +65,23 @@ class TripSummaryHeader extends StatelessWidget {
           ),
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
+            crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              Text(
-                candidate.origin,
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontSize: 24,
-                  fontWeight: FontWeight.bold,
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.end,
+                  children: [
+                    Text(
+                      candidate.origin,
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 24,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    MetarBadge(station: candidate.origin),
+                  ],
                 ),
               ),
               Padding(
@@ -81,12 +92,21 @@ class TripSummaryHeader extends StatelessWidget {
                   size: 20,
                 ),
               ),
-              Text(
-                candidate.destination,
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontSize: 24,
-                  fontWeight: FontWeight.bold,
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      candidate.destination,
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 24,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    MetarBadge(station: candidate.destination),
+                  ],
                 ),
               ),
             ],
