@@ -95,26 +95,30 @@ class _CommunityFeedState extends ConsumerState<CommunityFeed>
             shaderCallback: (Rect bounds) {
               return LinearGradient(
                 colors: [
-                  Colors.white.withValues(alpha: 0),
-                  Colors.white,
                   Colors.white,
                   Colors.white.withValues(alpha: 0),
+                  Colors.white.withValues(alpha: 0),
+                  Colors.white,
                 ],
                 stops: const [0.0, 0.05, 0.95, 1.0],
               ).createShader(bounds);
             },
-            blendMode: BlendMode.dstIn,
-            child: ListView.builder(
-              controller: _scrollController,
-              scrollDirection: Axis.horizontal,
-              // Infinite scroll by returning modulo index
-              itemBuilder: (context, index) {
-                final flight = flights[index % flights.length];
-                return Padding(
-                  padding: const EdgeInsets.only(right: 16.0), // Consistent Gap
-                  child: _RecentFlightItem(flight: flight),
-                );
-              },
+            blendMode: BlendMode.dstOut,
+            child: RepaintBoundary(
+              child: ListView.builder(
+                controller: _scrollController,
+                scrollDirection: Axis.horizontal,
+                // Infinite scroll by returning modulo index
+                itemBuilder: (context, index) {
+                  final flight = flights[index % flights.length];
+                  return Padding(
+                    padding: const EdgeInsets.only(
+                      right: 16.0,
+                    ), // Consistent Gap
+                    child: _RecentFlightItem(flight: flight),
+                  );
+                },
+              ),
             ),
           ),
         ),
