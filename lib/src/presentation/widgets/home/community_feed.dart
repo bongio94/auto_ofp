@@ -63,13 +63,29 @@ class _CommunityFeedState extends ConsumerState<CommunityFeed>
       children: [
         Padding(
           padding: const EdgeInsets.only(left: 0),
-          child: Text(
-            "COMMUNITY ACTIVITY",
-            style: Theme.of(context).textTheme.labelSmall?.copyWith(
-              color: Colors.grey.shade500,
-              letterSpacing: 2,
-              fontWeight: FontWeight.bold,
-            ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                "COMMUNITY ACTIVITY",
+                style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                  color: Colors.grey.shade500,
+                  letterSpacing: 2,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              const SizedBox(width: 8),
+              Tooltip(
+                preferBelow: false,
+                message:
+                    "We do not collect any personal data, only origin, destination and flight number",
+                child: Icon(
+                  Icons.info_outline_rounded,
+                  size: 16,
+                  color: Colors.grey.shade500,
+                ),
+              ),
+            ],
           ),
         ),
         const SizedBox(height: 16),
@@ -77,14 +93,14 @@ class _CommunityFeedState extends ConsumerState<CommunityFeed>
           height: 40,
           child: ShaderMask(
             shaderCallback: (Rect bounds) {
-              return const LinearGradient(
+              return LinearGradient(
                 colors: [
-                  Colors.transparent,
+                  Colors.white.withValues(alpha: 0),
                   Colors.white,
                   Colors.white,
-                  Colors.transparent,
+                  Colors.white.withValues(alpha: 0),
                 ],
-                stops: [0.0, 0.05, 0.95, 1.0],
+                stops: const [0.0, 0.05, 0.95, 1.0],
               ).createShader(bounds);
             },
             blendMode: BlendMode.dstIn,
