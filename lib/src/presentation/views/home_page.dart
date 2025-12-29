@@ -46,7 +46,7 @@ class _FlightSearchScreenState extends ConsumerState<FlightSearchScreen> {
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
                           Container(
-                            padding: const EdgeInsets.only(left: 100),
+                            padding: const EdgeInsets.only(left: 100, right: 4),
                             width: 814,
                             child: CommunityFeed(),
                           ),
