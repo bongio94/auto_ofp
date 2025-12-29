@@ -211,9 +211,19 @@ class FlightImporter {
 
         if (data['recent_flights'] != null) {
           final List<dynamic> recentRaw = data['recent_flights'];
-          final recent = recentRaw
-              .map((e) => RecentFlight.fromJson(e))
-              .toList();
+          final recent = <RecentFlight>[];
+          final seen = <String>{};
+
+          for (var item in recentRaw) {
+            final flight = RecentFlight.fromJson(item);
+            final key =
+                '${flight.callsign}_${flight.origin}_${flight.destination}';
+            if (!seen.contains(key)) {
+              seen.add(key);
+              recent.add(flight);
+            }
+          }
+
           ref.read(recentFlightsProvider.notifier).state = recent;
         }
 

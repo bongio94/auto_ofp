@@ -40,6 +40,7 @@ A modern web tool designed to streamline your flight simulation workflow. **Auto
 - **Aircraft Data**: Provided by [The OpenSky Network](https://opensky-network.org).
 - **Flight Planning**: Powered by **SimBrief**.
 - **Airline Logos**: Provided by [airframes.io](https://github.com/airframesio/airline-images).
+- **Weather Data**: METAR data provided by [AVWX](https://avwx.rest).
 
 ---
 
