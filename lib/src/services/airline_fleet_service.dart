@@ -6,15 +6,11 @@ class AirlineFleetService {
     // Normalize to upper case
     final code = airlineCode.toUpperCase();
 
-    // Check our static database
+    // Check static database
     if (_fleets.containsKey(code)) {
       return _fleets[code]!;
     }
 
-    // Default fallback groups if specific airline not found
-    // This is hard to guess, so maybe return empty or a generic set?
-    // User asked for "Increase precision", so random guessing isn't good.
-    // We return empty if we don't know the airline, letting other fallbacks handle it.
     return [];
   }
 
