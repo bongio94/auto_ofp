@@ -1,10 +1,12 @@
 import 'package:auto_ofp/src/services/flight_fetching_service.dart';
 import 'package:auto_ofp/src/services/airline_fleet_service.dart';
+import 'package:auto_ofp/src/services/simbrief_launcher_service.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../flight_search/aircraft_selection_grid.dart';
 import '../flight_search/manual_selection_button.dart';
+
 import '../flight_search/search_input_section.dart';
 import '../flight_search/trip_summary_header.dart';
 
@@ -84,6 +86,7 @@ class _FlightSearchCardState extends ConsumerState<FlightSearchCard> {
                 origin: base.origin,
                 destination: base.destination,
                 date: base.date,
+                time: base.time,
                 atcCallsign: base.atcCallsign,
               ),
             );
@@ -136,9 +139,10 @@ class _FlightSearchCardState extends ConsumerState<FlightSearchCard> {
       origin: base.origin,
       destination: base.destination,
       date: base.date,
+      time: base.time,
       atcCallsign: base.atcCallsign,
     );
-    FlightImporter().launchSimBrief(manual);
+    SimbriefLauncherService.launchSimBrief(manual);
   }
 
   @override
@@ -237,7 +241,7 @@ class _FlightSearchCardState extends ConsumerState<FlightSearchCard> {
                   candidates: suggestedCandidates,
                   accentColor: theme.colorScheme.secondary,
                   textColor: Colors.white70,
-                  onSelected: (c) => FlightImporter().launchSimBrief(c),
+                  onSelected: (c) => SimbriefLauncherService.launchSimBrief(c),
                 ),
 
                 const SizedBox(height: 24),
@@ -333,7 +337,7 @@ class _FlightSearchCardState extends ConsumerState<FlightSearchCard> {
                             accentColor: theme.colorScheme.primary,
                             textColor: Colors.white,
                             onSelected: (c) =>
-                                FlightImporter().launchSimBrief(c),
+                                SimbriefLauncherService.launchSimBrief(c),
                           ),
                         )
                       : const SizedBox.shrink(),
