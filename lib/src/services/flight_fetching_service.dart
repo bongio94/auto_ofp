@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:flutter/services.dart' show rootBundle;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:url_launcher/url_launcher.dart';
 
 class FlightCandidate {
   final String icao24;
@@ -14,6 +13,7 @@ class FlightCandidate {
   final String origin;
   final String destination;
   final String date;
+  final String time;
   final String atcCallsign; // "TAP1094P" (Actual ATC callsign, for reference)
 
   FlightCandidate({
@@ -25,6 +25,7 @@ class FlightCandidate {
     required this.origin,
     required this.destination,
     required this.date,
+    required this.time,
     required this.atcCallsign,
   });
 }
@@ -70,7 +71,7 @@ class FlightImporter {
   Map<String, String>? parseFlightAwareUrl(String url) {
     // Matches: .../flight/TAP1094/history/20251225/1505Z/LPPT/LEVC
     final regExp = RegExp(
-      r'flight\/([A-Z0-9]+)\/history\/([0-9]{8})\/[A-Z0-9]+\/([A-Z]{4})\/([A-Z]{4})',
+      r'flight\/([A-Z0-9]+)\/history\/([0-9]{8})\/([A-Z0-9]+)\/([A-Z]{4})\/([A-Z]{4})',
     );
     final match = regExp.firstMatch(url);
 
@@ -78,8 +79,9 @@ class FlightImporter {
       return {
         'callsign': match.group(1)!,
         'date': match.group(2)!,
-        'origin': match.group(3)!,
-        'dest': match.group(4)!,
+        'time': match.group(3)!, // "1505Z"
+        'origin': match.group(4)!,
+        'dest': match.group(5)!,
       };
     }
     return null;
@@ -100,6 +102,7 @@ class FlightImporter {
     final masterOrigin = params['origin']!;
     final masterDest = params['dest']!;
     final masterDate = params['date']!;
+    final masterTime = params['time']!;
 
     debugPrint(
       "🚀 Looking for aircraft flying: $masterCallsign ($masterOrigin -> $masterDest)",
@@ -140,6 +143,7 @@ class FlightImporter {
                 origin: masterOrigin,
                 destination: masterDest,
                 date: masterDate,
+                time: masterTime,
                 // Worker Data for Reality Check
                 type: _aircraftDb![hex],
                 atcCallsign: c['callsign'] ?? "Unknown", // "TAP1094P"
@@ -162,6 +166,7 @@ class FlightImporter {
             origin: masterOrigin,
             destination: masterDest,
             date: masterDate,
+            time: masterTime,
             atcCallsign: masterCallsign,
           ),
         );
@@ -238,21 +243,6 @@ class FlightImporter {
       debugPrint("❌ Error fetching stats: $e");
     }
     return null;
-  }
-
-  void launchSimBrief(FlightCandidate selection) {
-    final url = Uri.parse("https://dispatch.simbrief.com/options/custom")
-        .replace(
-          queryParameters: {
-            'airline': selection.airlineCode,
-            'fltnum': selection.flightNumber,
-            'orig': selection.origin,
-            'dest': selection.destination,
-            'type': selection.type,
-          },
-        );
-
-    launchUrl(url, mode: LaunchMode.externalApplication);
   }
 }
 
