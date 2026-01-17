@@ -3,14 +3,15 @@ import 'dart:convert';
 
 import 'package:flutter/material.dart';
 
-void main() async {
-  final sourceFiles = [
-    File(r'c:\Users\Ale\Desktop\aircraft-database-complete-2025-02.csv'),
-    File(r'c:\Users\Ale\Desktop\aircraft-database-complete-2025-08.csv'),
+void main(List<String> args) async {
+  if (args.isEmpty) {
+    debugPrint(
+      'Usage: dart process_aircraft.dart <path/to/csv1> [path/to/csv2 ...]',
+    );
+    return;
+  }
 
-    // Add more files here as needed
-    // File(r'c:\Users\Ale\Desktop\part2.csv'),
-  ];
+  final sourceFiles = args.map((path) => File(path)).toList();
 
   final outputDir = Directory('assets');
   final outputFile = File('${outputDir.path}/aircraft_db.json');
@@ -92,7 +93,9 @@ void main() async {
             if (modelIdx != -1) typeIndex = modelIdx;
           }
 
-          debugPrint('    -> Column Indices: icao24=$icaoIndex, type=$typeIndex');
+          debugPrint(
+            '    -> Column Indices: icao24=$icaoIndex, type=$typeIndex',
+          );
 
           if (icaoIndex == -1 || typeIndex == -1) {
             debugPrint(
