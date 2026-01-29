@@ -163,3 +163,7 @@ app.*.map.json
 /android/app/debug
 /android/app/profile
 /android/app/release
+
+# Cloudflare Worker
+cloudflare_worker.js
+
