@@ -67,30 +67,22 @@ class _LoadingTextAnimationState extends State<LoadingTextAnimation> {
   @override
   Widget build(BuildContext context) {
     return AnimatedSwitcher(
-      duration: const Duration(milliseconds: 500),
+      duration: const Duration(milliseconds: 600),
       transitionBuilder: (child, animation) {
-        // Fade in faster so we can see the slide
-        final opacity = CurvedAnimation(
+        final curve = CurvedAnimation(
           parent: animation,
-          curve: const Interval(0.0, 0.5, curve: Curves.easeIn),
+          curve: const Interval(0.5, 1.0, curve: Curves.easeInOut),
         );
 
-        // Slide continues throughout
-        final offset =
-            Tween<Offset>(
-              begin: const Offset(0.0, 0.5),
-              end: Offset.zero,
-            ).animate(
-              CurvedAnimation(
-                parent: animation,
-                curve: const Interval(0.0, 1.0, curve: Curves.easeOutBack),
-              ),
-            );
+        final offset = Tween<Offset>(
+          begin: const Offset(0.0, -0.5),
+          end: Offset.zero,
+        ).animate(curve);
 
-        return FadeTransition(
-          opacity: opacity,
-          child: SlideTransition(
-            position: offset,
+        return SlideTransition(
+          position: offset,
+          child: FadeTransition(
+            opacity: curve,
             child: child,
           ),
         );
