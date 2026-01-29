@@ -49,7 +49,7 @@ class _LoadingTextAnimationState extends State<LoadingTextAnimation> {
   void initState() {
     super.initState();
     _phrases.shuffle();
-    _timer = Timer.periodic(const Duration(milliseconds: 800), (timer) {
+    _timer = Timer.periodic(const Duration(milliseconds: 1200), (timer) {
       if (mounted) {
         setState(() {
           _index = (_index + 1) % _phrases.length;
@@ -67,7 +67,7 @@ class _LoadingTextAnimationState extends State<LoadingTextAnimation> {
   @override
   Widget build(BuildContext context) {
     return AnimatedSwitcher(
-      duration: const Duration(milliseconds: 600),
+      duration: const Duration(milliseconds: 800),
       transitionBuilder: (child, animation) {
         final curve = CurvedAnimation(
           parent: animation,
@@ -75,7 +75,7 @@ class _LoadingTextAnimationState extends State<LoadingTextAnimation> {
         );
 
         final offset = Tween<Offset>(
-          begin: const Offset(0.0, -0.5),
+          begin: const Offset(0.0, 0.5),
           end: Offset.zero,
         ).animate(curve);
 
