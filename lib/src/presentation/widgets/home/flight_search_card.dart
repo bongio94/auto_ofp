@@ -9,6 +9,7 @@ import '../flight_search/manual_selection_button.dart';
 
 import '../flight_search/search_input_section.dart';
 import '../flight_search/trip_summary_header.dart';
+import '../flight_search/time_selection_toggle.dart';
 
 class FlightSearchCard extends ConsumerStatefulWidget {
   final ValueChanged<bool>? onResultsFound;
@@ -23,6 +24,7 @@ class _FlightSearchCardState extends ConsumerState<FlightSearchCard> {
   bool _hasLaunched = false;
   bool _isLoading = false;
   bool _showDetectedAircraft = false;
+  bool _useCurrentTime = false;
 
   @override
   void dispose() {
@@ -142,7 +144,10 @@ class _FlightSearchCardState extends ConsumerState<FlightSearchCard> {
       time: base.time,
       atcCallsign: base.atcCallsign,
     );
-    SimbriefLauncherService.launchSimBrief(manual);
+    SimbriefLauncherService.launchSimBrief(
+      manual,
+      useCurrentTime: _useCurrentTime,
+    );
   }
 
   @override
@@ -209,7 +214,13 @@ class _FlightSearchCardState extends ConsumerState<FlightSearchCard> {
             if (hasResults && displayCandidate != null) ...[
               const SizedBox(height: 24),
 
-              // Common Trip Details Header
+              TimeSelectionToggle(
+                value: _useCurrentTime,
+                onChanged: (val) => setState(() => _useCurrentTime = val),
+              ),
+
+              const SizedBox(height: 8),
+
               TripSummaryHeader(candidate: displayCandidate),
 
               const SizedBox(height: 24),
@@ -241,7 +252,10 @@ class _FlightSearchCardState extends ConsumerState<FlightSearchCard> {
                   candidates: suggestedCandidates,
                   accentColor: theme.colorScheme.secondary,
                   textColor: Colors.white70,
-                  onSelected: (c) => SimbriefLauncherService.launchSimBrief(c),
+                  onSelected: (c) => SimbriefLauncherService.launchSimBrief(
+                    c,
+                    useCurrentTime: _useCurrentTime,
+                  ),
                 ),
 
                 const SizedBox(height: 24),
@@ -337,7 +351,10 @@ class _FlightSearchCardState extends ConsumerState<FlightSearchCard> {
                             accentColor: theme.colorScheme.primary,
                             textColor: Colors.white,
                             onSelected: (c) =>
-                                SimbriefLauncherService.launchSimBrief(c),
+                                SimbriefLauncherService.launchSimBrief(
+                                  c,
+                                  useCurrentTime: _useCurrentTime,
+                                ),
                           ),
                         )
                       : const SizedBox.shrink(),

@@ -3,43 +3,58 @@ import 'package:url_launcher/url_launcher.dart';
 import 'package:auto_ofp/src/services/flight_fetching_service.dart';
 
 class SimbriefLauncherService {
-  static Future<void> launchSimBrief(FlightCandidate selection) async {
+  static const _months = [
+    "JAN",
+    "FEB",
+    "MAR",
+    "APR",
+    "MAY",
+    "JUN",
+    "JUL",
+    "AUG",
+    "SEP",
+    "OCT",
+    "NOV",
+    "DEC",
+  ];
+
+  static Future<void> launchSimBrief(
+    FlightCandidate selection, {
+    bool useCurrentTime = false,
+  }) async {
     String formattedDate = selection.date;
     String deph = "";
     String depm = "";
 
     try {
-      // 1. Format Date: YYYYMMDD -> DDMONYY
-      if (selection.date.length == 8) {
-        final year = selection.date.substring(2, 4);
-        final monthStr = selection.date.substring(4, 6);
-        final day = selection.date.substring(6, 8);
+      if (useCurrentTime) {
+        final now = DateTime.now().toUtc();
+        final day = now.day.toString().padLeft(2, '0');
+        final monthStr = _months[now.month - 1];
+        final year = (now.year % 100).toString().padLeft(2, '0');
 
-        const months = [
-          "JAN",
-          "FEB",
-          "MAR",
-          "APR",
-          "MAY",
-          "JUN",
-          "JUL",
-          "AUG",
-          "SEP",
-          "OCT",
-          "NOV",
-          "DEC",
-        ];
-        final monthIndex = int.parse(monthStr) - 1;
-        if (monthIndex >= 0 && monthIndex < 12) {
-          formattedDate = "$day${months[monthIndex]}$year";
+        formattedDate = "$day$monthStr$year";
+        deph = now.hour.toString().padLeft(2, '0');
+        depm = now.minute.toString().padLeft(2, '0');
+      } else {
+        // 1. Format Date: YYYYMMDD -> DDMONYY
+        if (selection.date.length == 8) {
+          final year = selection.date.substring(2, 4);
+          final monthStr = selection.date.substring(4, 6);
+          final day = selection.date.substring(6, 8);
+
+          final monthIndex = int.parse(monthStr) - 1;
+          if (monthIndex >= 0 && monthIndex < 12) {
+            formattedDate = "$day${_months[monthIndex]}$year";
+          }
         }
-      }
 
-      // 2. Extract Time: HHMMZ -> deph, depm
-      final cleanTime = selection.time.replaceAll(RegExp(r'[^0-9]'), '');
-      if (cleanTime.length >= 4) {
-        deph = cleanTime.substring(0, 2);
-        depm = cleanTime.substring(2, 4);
+        // 2. Extract Time: HHMMZ -> deph, depm
+        final cleanTime = selection.time.replaceAll(RegExp(r'[^0-9]'), '');
+        if (cleanTime.length >= 4) {
+          deph = cleanTime.substring(0, 2);
+          depm = cleanTime.substring(2, 4);
+        }
       }
     } catch (e) {
       debugPrint("Error formatting date/time for SimBrief: $e");
