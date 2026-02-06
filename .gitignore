@@ -166,6 +166,7 @@ app.*.map.json
 
 # Cloudflare Worker
 cloudflare_worker.js
+autoofp_premium_worker.js
 
 # Aircrafts databases
 aircraft-database-complete-2025-02.csv
