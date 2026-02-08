@@ -4,6 +4,7 @@ import '../widgets/home/flight_search_card.dart';
 import '../widgets/home/home_footer.dart';
 import '../widgets/home/home_header.dart';
 import '../widgets/home/community_feed.dart';
+import '../widgets/home/migration_banner.dart';
 
 class FlightSearchScreen extends ConsumerStatefulWidget {
   const FlightSearchScreen({super.key});
@@ -45,6 +46,12 @@ class _FlightSearchScreenState extends ConsumerState<FlightSearchScreen> {
                       child: Column(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
+                          Container(
+                            width: 814,
+                            padding: const EdgeInsets.only(left: 100, right: 4),
+                            child: const MigrationBanner(),
+                          ),
+                          const SizedBox(height: 24),
                           Container(
                             padding: const EdgeInsets.only(left: 100, right: 4),
                             width: 814,
@@ -106,6 +113,10 @@ class _FlightSearchScreenState extends ConsumerState<FlightSearchScreen> {
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
+                      Padding(
+                        padding: const EdgeInsets.only(bottom: 24.0),
+                        child: const MigrationBanner(),
+                      ),
                       HomeHeader(),
                       SizedBox(height: 48),
                       FlightSearchCard(),
