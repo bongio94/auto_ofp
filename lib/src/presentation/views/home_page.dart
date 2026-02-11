@@ -19,118 +19,123 @@ class _FlightSearchScreenState extends ConsumerState<FlightSearchScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       extendBodyBehindAppBar: true,
-      body: Container(
-        decoration: const BoxDecoration(
-          gradient: RadialGradient(
-            center: Alignment.topLeft,
-            radius: 1.5,
-            colors: [
-              Color(0xFF1E293B), // Slate 800
-              Color(0xFF0F172A), // Slate 900
-            ],
-          ),
-        ),
-        child: LayoutBuilder(
-          builder: (context, constraints) {
-            final isDesktop = constraints.maxWidth > 900;
+      body: Stack(
+        children: [
+          Container(
+            decoration: const BoxDecoration(
+              gradient: RadialGradient(
+                center: Alignment.topLeft,
+                radius: 1.5,
+                colors: [
+                  Color(0xFF1E293B), // Slate 800
+                  Color(0xFF0F172A), // Slate 900
+                ],
+              ),
+            ),
+            child: LayoutBuilder(
+              builder: (context, constraints) {
+                final isDesktop = constraints.maxWidth > 900;
 
-            if (isDesktop) {
-              return SingleChildScrollView(
-                child: ConstrainedBox(
-                  constraints: BoxConstraints(
-                    minHeight: constraints.maxHeight,
-                  ),
-                  child: Center(
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(vertical: 32.0),
+                if (isDesktop) {
+                  return SingleChildScrollView(
+                    child: ConstrainedBox(
+                      constraints: BoxConstraints(
+                        minHeight: constraints.maxHeight,
+                      ),
+                      child: Center(
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(vertical: 32.0),
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              const SizedBox(height: 24),
+                              Container(
+                                padding: const EdgeInsets.only(
+                                  left: 100,
+                                  right: 4,
+                                ),
+                                width: 814,
+                                child: CommunityFeed(),
+                              ),
+                              const SizedBox(height: 24),
+                              IntrinsicHeight(
+                                child: Row(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  crossAxisAlignment:
+                                      CrossAxisAlignment.stretch,
+                                  children: [
+                                    SizedBox(
+                                      width: 350,
+                                      child: AnimatedAlign(
+                                        duration: const Duration(
+                                          milliseconds: 600,
+                                        ),
+                                        curve: Curves.fastOutSlowIn,
+                                        alignment: _hasResults
+                                            ? Alignment.topRight
+                                            : Alignment.centerRight,
+                                        child: Column(
+                                          mainAxisSize: MainAxisSize.min,
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.center,
+                                          children: [
+                                            HomeHeader(),
+                                            SizedBox(height: 16),
+                                            HomeFooter(),
+                                          ],
+                                        ),
+                                      ),
+                                    ),
+                                    const SizedBox(width: 64),
+                                    Align(
+                                      alignment: Alignment.centerLeft,
+                                      child: FlightSearchCard(
+                                        onResultsFound: (val) {
+                                          if (_hasResults != val) {
+                                            setState(() => _hasResults = val);
+                                          }
+                                        },
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                  );
+                }
+
+                return SingleChildScrollView(
+                  padding: const EdgeInsets.symmetric(horizontal: 24),
+                  child: ConstrainedBox(
+                    constraints: BoxConstraints(
+                      minHeight: constraints.maxHeight,
+                    ),
+                    child: Center(
                       child: Column(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          Container(
-                            width: 814,
-                            padding: const EdgeInsets.only(left: 100, right: 4),
-                            child: const MigrationBanner(),
-                          ),
-                          const SizedBox(height: 24),
-                          Container(
-                            padding: const EdgeInsets.only(left: 100, right: 4),
-                            width: 814,
-                            child: CommunityFeed(),
-                          ),
-                          const SizedBox(height: 24),
-                          IntrinsicHeight(
-                            child: Row(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              crossAxisAlignment: CrossAxisAlignment.stretch,
-                              children: [
-                                SizedBox(
-                                  width: 350,
-                                  child: AnimatedAlign(
-                                    duration: const Duration(milliseconds: 600),
-                                    curve: Curves.fastOutSlowIn,
-                                    alignment: _hasResults
-                                        ? Alignment.topRight
-                                        : Alignment.centerRight,
-                                    child: Column(
-                                      mainAxisSize: MainAxisSize.min,
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.center,
-                                      children: [
-                                        HomeHeader(),
-                                        SizedBox(height: 16),
-                                        HomeFooter(),
-                                      ],
-                                    ),
-                                  ),
-                                ),
-                                const SizedBox(width: 64),
-                                Align(
-                                  alignment: Alignment.centerLeft,
-                                  child: FlightSearchCard(
-                                    onResultsFound: (val) {
-                                      if (_hasResults != val) {
-                                        setState(() => _hasResults = val);
-                                      }
-                                    },
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
+                          HomeHeader(),
+                          SizedBox(height: 48),
+                          FlightSearchCard(),
+                          SizedBox(height: 32),
+                          CommunityFeed(),
+                          SizedBox(height: 16),
+                          HomeFooter(),
                         ],
                       ),
                     ),
                   ),
-                ),
-              );
-            }
-
-            return SingleChildScrollView(
-              padding: const EdgeInsets.symmetric(horizontal: 24),
-              child: ConstrainedBox(
-                constraints: BoxConstraints(minHeight: constraints.maxHeight),
-                child: Center(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Padding(
-                        padding: const EdgeInsets.only(bottom: 24.0),
-                        child: const MigrationBanner(),
-                      ),
-                      HomeHeader(),
-                      SizedBox(height: 48),
-                      FlightSearchCard(),
-                      SizedBox(height: 32),
-                      CommunityFeed(),
-                      SizedBox(height: 16),
-                      HomeFooter(),
-                    ],
-                  ),
-                ),
-              ),
-            );
-          },
-        ),
+                );
+              },
+            ),
+          ),
+          // Full screen migration overlay
+          const MigrationBanner(),
+        ],
       ),
     );
   }
